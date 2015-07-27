@@ -1,0 +1,60 @@
+-------------------------
+Title: "Final_Project"
+Author: "vskrelja"
+Date: "July 26, 2015"
+Output: html_document
+-------------------------
+
+
+-------------------------
+```{r}
+# I. Reading in data / creating data frames and subsets:
+lendingclub_zipcodes <- read.csv("https://raw.githubusercontent.com/vskrelja/Final/master/lendingclub_zipcodes.csv", header=TRUE, sep=",")
+loans <- data.frame(lendingclub_zipcodes)
+numloans <- nrow(loans)
+defaults <- nrow(loans[loans$loanstatus=="ChargedOff",])
+homeowner <- data.frame(loans[loans$homeownership=="OWN"|loans$homeownership=="MORTGAGE",])
+homeownercount <- nrow(homeowner)
+defaults_homeowner <- nrow(homeowner[homeowner$loanstatus=="ChargedOff",])
+defaults_df <- data.frame(loans[loans$loanstatus=="ChargedOff",])
+```
+
+
+```{r}
+# II. Transforming dataframe to add new column (Income Ratio vs. Defaults Chart 1):
+loans$incomeperhousehold[loans$incomeperhousehold==0] <- NA  #replace missing values with NA to exclude from calcuation
+loans["income_ratio"] <- NA  # Adds a new column with NA placeholders
+loans$income_ratio <- loans$annualinc/loans$incomeperhousehold  # populates new column with calculated values 
+summary(loans$income_ratio)
+
+loans$income_ratio[loans$income_ratio > 5] <- NA  # Ignoring outliers > 5 in ratios
+summary(loans$income_ratio)
+
+plot(loans$loanstatus,loans$income_ratio,ylab="Borrower Income / Avg. Income for Zipcode", main = "Chart 1 - Income Ratio vs. Defaults")
+```
+
+
+```{r}
+# III. Fico Score vs. Avg House Value by Zipcode for Defaults (Chart 2):
+defaults_df$lastficorangelow[defaults_df$lastficorangelow==0] <- NA  # Replace missing ficos w/NA to exclude from plot
+summary(defaults_df$lastficorangelow)
+
+plot(defaults_df$lastficorangelow,defaults_df$averagehousevalue/1000,xlab = "FICO",ylab = "Avg. House Value ('000s)",main = "Chart 2 - Default Drilldown: High Fico - Low Home Values")
+```
+
+
+```{r}
+# IV. Defaults Distribution by State (Chart 3):
+plot(defaults_df$state, col="blue",ylab="Number of Defaults per State", main = "Chart 3 - Defaults by State")
+```
+
+
+```{r}
+# V. Conditional Probability Calculations:
+prob_defaults <- defaults / numloans * 100  # Probability of defaulting
+print(prob_defaults)
+prob_homeowner <- homeownercount / numloans * 100  # Probability of homeownership  
+print(prob_homeowner)
+prob_defaults_homeowner <- defaults_homeowner/homeownercount * 100  #Probability of default given homeownership
+print(prob_defaults_homeowner)
+```
